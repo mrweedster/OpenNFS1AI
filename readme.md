@@ -48,6 +48,7 @@ This port has added the possibility to change the resolutions. Previously this w
 - Incar perspective changed so the street is better visible
 - Stages/Races now end when the players car is stopped
 - Races are now class races. There are three different classes and opponent cars get the same class as the player car
+- Gamma corrects now depending on the detected GPU
 
 ## Legal:
 Models, textures, tracks, cars by Pioneer Productions / EA Seattle (C) 1995.
