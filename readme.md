@@ -29,7 +29,6 @@ None
 This port has added the possibility to change the resolutions. Previously this was made in the code but now there's an added resolution menu when starting the game 
 
 ### Issues
-- On systems with discrete GPUs there is an issue with gamma which makes it brighter than usual
 - The warrior wheels have a black overlay
 
 ### Fixes
