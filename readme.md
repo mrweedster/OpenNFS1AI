@@ -16,7 +16,10 @@ This is an AI enhanced port of OpenNFS1 (https://github.com/jeff-1amstudios/Open
 ```
 git clone https://github.com/mrweedster/OpenNFS1AI.git
 ```
-Install mgcb beforehand: dotnet tool install --global dotnet-mgcb
+Install mgcb beforehand: 
+```
+dotnet tool install --global dotnet-mgcb
+```
 Open OpenNFS1.sln in Visual Studio >=2022 (Community Edition is fine)
 
 ### Installer
@@ -45,6 +48,7 @@ Note: The menu doesn't reflect the resolution change, it only works ingame
 - Dashboards scale with the resolution
 - Incar perspective changed so the street is better visible
 - Stages/Races now end when the players car is stopped
+- Races are now class races. There are three different classes and opponent cars get the same class as the player car
 
 ## Legal:
 Models, textures, tracks, cars by Pioneer Productions / EA Seattle (C) 1995.
