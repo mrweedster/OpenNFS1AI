@@ -1,7 +1,10 @@
-﻿{
+{
 	"fullScreen": false,
 	"cdDataPath": "CD_Data",
 	"drawDistance": 5000,
 	"respectOpenRoadCheckpoints": true,
-	"drawDebugInfo": false
+	"drawDebugInfo": false,
+	"gammaNvidia": 0.5,
+	"gammaAmd": 1.0,
+	"gammaOther": 1.0
 }

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using GameEngine;
@@ -15,6 +14,7 @@ namespace OpenNFS1
 
 		GraphicsDeviceManager _graphics;
 		RenderTarget2D _renderTarget;
+		Effect _gammaEffect;
 
 		public Game1()
 		{
@@ -43,24 +43,16 @@ namespace OpenNFS1
 		protected override void Initialize()
 		{
 			base.Initialize();
-
-			// On discrete GPUs (NVIDIA/AMD) the OpenGL driver marks the backbuffer as
-			// sRGB-capable and applies a linear→sRGB gamma curve when we blit the render
-			// target to screen, making mid-tones appear too bright/washed out.
-			// Integrated Intel GPUs typically don't do this so they look correct by default.
-			// SDL_SetWindowBrightness(1.0f) resets the window's gamma ramp to neutral
-			// (identity), neutralising any driver-level gamma boost without affecting
-			// other applications or the system display settings.
-			try { SDL_SetWindowBrightness(Window.Handle, 1.0f); }
-			catch { /* non-fatal: some platforms don't support gamma ramps */ }
 		}
-
-		[DllImport("SDL2.dll", CallingConvention = CallingConvention.Cdecl)]
-		static extern int SDL_SetWindowBrightness(IntPtr window, float brightness);
 
 		protected override void LoadContent()
 		{
 			Engine.Create(this, _graphics);
+
+			// Auto-detect gamma from the GPU vendor unless the user has an explicit
+			// "gamma" entry in gameconfig.json.  Must be called after Engine.Create()
+			// so the graphics device (and adapter info) is fully initialised.
+			GameConfig.AutoDetectGamma(GraphicsAdapter.DefaultAdapter.Description);
 
 			_renderTarget = new RenderTarget2D(Engine.Instance.Device, GameConfig.ResX, GameConfig.ResY,
 				false,
@@ -68,6 +60,8 @@ namespace OpenNFS1
 				DepthFormat.Depth24,
 				0,
 				RenderTargetUsage.DiscardContents);
+
+			_gammaEffect = Content.Load<Effect>("GammaCorrect");
 
 			Engine.Instance.Device.SetRenderTarget(_renderTarget);
 			Engine.Instance.ScreenSize = new Vector2(
@@ -110,7 +104,12 @@ namespace OpenNFS1
 					r.Width = w;
 					r.X = originalWidth / 2 - w / 2;
 				}
-				sprite.Begin();
+
+				// Apply gamma correction shader to counteract the driver's
+				// linear→sRGB conversion on NVIDIA/AMD discrete GPUs.
+				// On Intel (no sRGB conversion) gamma=1.0 produces pow(x,1)=x — identity.
+				_gammaEffect.Parameters["Gamma"].SetValue(GameConfig.Gamma);
+				sprite.Begin(SpriteSortMode.Immediate, null, null, null, null, _gammaEffect);
 				sprite.Draw(_renderTarget, r, Color.White);
 				sprite.End();
 			}

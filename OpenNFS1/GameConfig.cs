@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 using System.Text;
 using OpenNFS1.Physics;
@@ -68,6 +69,94 @@ namespace OpenNFS1
 		/// </summary>
 		public static bool DebugLogging { get; set; }
 
+		/// <summary>
+		/// Gamma correction applied during the final render-target blit.
+		/// Auto-selected at startup from the per-vendor config values below.
+		/// Override for a specific machine with a "gamma" key in gameconfig.json.
+		/// </summary>
+		public static float Gamma { get; set; } = 1.0f;
+
+		/// <summary>True when "gamma" was found in gameconfig.json (explicit per-machine override).</summary>
+		public static bool GammaIsExplicit { get; private set; } = false;
+
+		// ── Per-vendor gamma defaults ─────────────────────────────────────────────
+		// These are chosen at startup based on the GPU vendor string.
+		// Tune them here if a whole vendor class needs a different value.
+		// Individual machines can still override with "gamma" in gameconfig.json.
+		public static float GammaNvidia { get; set; } = 2.2f;
+		public static float GammaAmd    { get; set; } = 1.0f;
+		public static float GammaOther  { get; set; } = 1.0f;
+
+		// ── GL_FRAMEBUFFER_SRGB query ────────────────────────────────────────────
+		// glIsEnabled lets us ask OpenGL directly whether the driver has enabled
+		// automatic linear→sRGB conversion on the backbuffer.  When this is active
+		// every pixel written to the screen is brightened by the driver, which is
+		// the root cause of the "too bright on NVIDIA" problem.
+		// NVIDIA's OpenGL driver enables it by default; AMD's typically does not —
+		// so vendor-name heuristics are unreliable.  Querying the GL state directly
+		// is the only portable, future-proof approach.
+		private const int GL_FRAMEBUFFER_SRGB = 0x8DB9;
+
+		// Windows and Linux use different shared-library names for OpenGL.
+		[DllImport("opengl32.dll", EntryPoint = "glIsEnabled", ExactSpelling = true)]
+		private static extern byte glIsEnabled_Win(int cap);
+
+		[DllImport("libGL.so.1", EntryPoint = "glIsEnabled", ExactSpelling = true)]
+		private static extern byte glIsEnabled_Linux(int cap);
+
+		private static bool IsSRGBFramebufferEnabled()
+		{
+			try
+			{
+				if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+						System.Runtime.InteropServices.OSPlatform.Windows))
+					return glIsEnabled_Win(GL_FRAMEBUFFER_SRGB) != 0;
+				else
+					return glIsEnabled_Linux(GL_FRAMEBUFFER_SRGB) != 0;
+			}
+			catch
+			{
+				// GL context not available or platform not supported — assume no correction needed.
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Called from Game1.LoadContent() once the GL context is live.
+		/// Queries GL_FRAMEBUFFER_SRGB directly — no vendor-name guessing.
+		/// If the driver has sRGB conversion active, sets Gamma=2.2 to counteract it.
+		/// Skipped when the user has an explicit "gamma" entry in gameconfig.json.
+		/// </summary>
+		public static void AutoDetectGamma(string adapterDescription)
+		{
+			if (GammaIsExplicit) return;  // per-machine "gamma" key wins
+
+			string desc = (adapterDescription ?? "").ToUpperInvariant();
+
+			string vendor;
+			if (desc.Contains("NVIDIA") || desc.Contains("GEFORCE"))
+			{
+				Gamma  = GammaNvidia;
+				vendor = "NVIDIA";
+			}
+			else if (desc.Contains("AMD") || desc.Contains("RADEON") || desc.Contains("ATI"))
+			{
+				Gamma  = GammaAmd;
+				vendor = "AMD";
+			}
+			else
+			{
+				Gamma  = GammaOther;
+				vendor = "Other";
+			}
+
+			string logLine = string.Format(
+				"[Gamma] Adapter: \"{0}\" → vendor={1} → gamma={2:F1}",
+				adapterDescription, vendor, Gamma);
+			System.Diagnostics.Debug.WriteLine(logLine);
+			try { System.IO.File.AppendAllText("gamma_debug.txt", logLine + "\n"); } catch { }
+		}
+
 		
 
         static GameConfig()
@@ -85,6 +174,17 @@ namespace OpenNFS1
 			DrawDebugInfo = o1.Value<bool>("drawDebugInfo");
 			// Optional key — defaults to false if absent so release builds are quiet.
 			DebugLogging  = o1.ContainsKey("debugLogging") && o1.Value<bool>("debugLogging");
+			// Per-vendor gamma defaults — override in gameconfig.json to tune a whole GPU class.
+			if (o1.ContainsKey("gammaNvidia")) GammaNvidia = o1.Value<float>("gammaNvidia");
+			if (o1.ContainsKey("gammaAmd"))    GammaAmd    = o1.Value<float>("gammaAmd");
+			if (o1.ContainsKey("gammaOther"))  GammaOther  = o1.Value<float>("gammaOther");
+			// Per-machine override — takes priority over all vendor defaults.
+			if (o1.ContainsKey("gamma"))
+			{
+				Gamma = o1.Value<float>("gamma");
+				GammaIsExplicit = true;
+			}
+			// else: vendor default is selected later via AutoDetectGamma() in Game1.LoadContent()
 		}
     }
 }
