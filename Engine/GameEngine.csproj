@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>GameEngine</RootNamespace>
+    <AssemblyName>GameEngine</AssemblyName>
+    <Platforms>x64;x86;AnyCPU</Platforms>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Repo already has Properties\AssemblyInfo.cs — suppress SDK auto-generation -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <NoWarn>CS0618;CS0612;CS0219;CS0108;CS0114;CS0169;CS0649;CS1998</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,21 @@
+<Project>
+
+  <!-- Fully override RunContentBuilder to use plain 'mgcb' instead of 'dotnet mgcb' -->
+  <Target Name="RunContentBuilder" DependsOnTargets="PrepareContentBuilder">
+
+    <Exec
+      Condition="'%(ContentReference.FullPath)' != ''"
+      Command="mgcb $(MonoGameMGCBAdditionalArguments) /@:&quot;%(ContentReference.FullPath)&quot; /platform:$(MonoGamePlatform) /outputDir:&quot;%(ContentReference.ContentOutputDir)&quot; /intermediateDir:&quot;%(ContentReference.ContentIntermediateOutputDir)&quot; /workingDir:&quot;%(ContentReference.FullDir)&quot;"
+      WorkingDirectory="$(MSBuildProjectDirectory)" />
+
+    <ItemGroup>
+      <ExtraContent
+        Condition="'%(ContentReference.ContentOutputDir)' != ''"
+        Include="%(ContentReference.ContentOutputDir)\**\*.*">
+        <ContentDir>%(ContentReference.ContentDir)</ContentDir>
+      </ExtraContent>
+    </ItemGroup>
+
+  </Target>
+
+</Project>

@@ -1,0 +1,7 @@
+﻿{
+	"fullScreen": false,
+	"cdDataPath": "CD_Data",
+	"drawDistance": 5000,
+	"respectOpenRoadCheckpoints": true,
+	"drawDebugInfo": false
+}

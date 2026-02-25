@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>OpenNFS1</RootNamespace>
+    <AssemblyName>OpenNFS1</AssemblyName>
+    <Platforms>x64;x86;AnyCPU</Platforms>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Repo has Properties\AssemblyInfo.cs already — suppress SDK auto-generation -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <NoWarn>CS0618;CS0612;CS0219;CS0108;CS0114;CS0169;CS0649;CS1998</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.1.303" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Engine\GameEngine.csproj" />
+  </ItemGroup>
+
+  <!-- Content pipeline: compile shaders and fonts from source -->
+  <ItemGroup>
+    <MonoGameContentReference Include="Content\Content.mgcb" />
+  </ItemGroup>
+
+  <!-- Runtime files -->
+  <ItemGroup>
+    <None Update="gameconfig.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="Content\smoke.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Content\splash-screen.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+
+  <!-- Force the final MGCB command to plain 'mgcb' (DotnetCommand is cleared in Directory.Build.props) -->
+  <PropertyGroup>
+    <_Command>mgcb</_Command>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <!-- Pre-set MGCBCommand before MonoGame NuGet props are imported.
+         This triggers the AutoRestoreMGCBTool=false condition in the props file,
+         disabling the 'dotnet tool restore' step that fails with code 9009. -->
+    <MGCBCommand>mgcb</MGCBCommand>
+    <DotnetCommand></DotnetCommand>
+    <!-- Pre-set _Command so RunContentBuilder target doesn't rebuild it as '"" "mgcb"' -->
+    <_Command>mgcb</_Command>
+  </PropertyGroup>
+</Project>
