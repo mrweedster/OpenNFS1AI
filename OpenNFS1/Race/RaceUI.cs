@@ -17,7 +17,7 @@ namespace OpenNFS1.UI
 
         // Height of the black HUD bar at the top, in 640x480 baseline pixels.
         // Increase this value to make the bar taller.
-        const int HudBarHeight = 30;
+        const int HudBarHeight = 37;
 
         Rectangle _backgroundRectangle;
         Texture2D _backgroundTexture;
