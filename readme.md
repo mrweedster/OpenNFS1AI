@@ -30,6 +30,7 @@ This port has added the possibility to change the resolutions. Previously this w
 
 ### Issues
 - The warrior wheels have a black overlay
+- The speedometer and tachometer needles overlap the steering wheel
 
 ### Fixes
 - Lambo wheels are now rendered properly
@@ -48,6 +49,8 @@ This port has added the possibility to change the resolutions. Previously this w
 - Stages/Races now end when the players car is stopped
 - Races are now class races. There are three different classes and opponent cars get the same class as the player car
 - Gamma corrects now depending on the detected GPU
+- Added rear view mirrors for the in car perspective
+- Proper digital speedometers for the Warrior and ZR1
 
 ## Legal:
 Models, textures, tracks, cars by Pioneer Productions / EA Seattle (C) 1995.

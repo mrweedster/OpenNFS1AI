@@ -44,7 +44,7 @@ namespace OpenNFS1
 				//_race.AddDriver(new AIDriver(VehicleDescription.Descriptions.Find(a => a.Name == "Viper")));
 				//_race.AddDriver(new AIDriver(VehicleDescription.Descriptions.Find(a => a.Name == "Viper")));
 				//_race.AddDriver(new AIDriver(VehicleDescription.Descriptions.Find(a => a.Name == "Viper")));
-				_playerUI = new PlayerUI(_car);
+				_playerUI = new PlayerUI(_car, _race);
 			/*
 			d = new AIDriver(VehicleDescription.Descriptions.Find(a => a.Name == "911"));
 			_aiDrivers.Add(d);
@@ -139,6 +139,11 @@ namespace OpenNFS1
 
 		public void Draw()
 		{
+			// Pre-render pass: fill any off-screen render targets (e.g. the rear-view mirror)
+			// BEFORE anything touches the backbuffer.  XNA/MonoGame discards the backbuffer
+			// content whenever a RenderTarget2D is set, so this must come first.
+			_playerUI.PreRender();
+
 			Engine.Instance.Device.Viewport = _raceViewport;
 
 			_race.Render(_playerUI.ShouldRenderCar);

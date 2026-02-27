@@ -31,6 +31,8 @@ namespace OpenNFS1
 			_camera.Update(gameTime);
 		}
 
+		public void PreRender() { }
+
 		public void Render()
 		{
 		}

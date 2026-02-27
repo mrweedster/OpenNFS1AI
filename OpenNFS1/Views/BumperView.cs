@@ -50,6 +50,8 @@ namespace OpenNFS1.Views
             
         }
 
+        public void PreRender() { }
+
         public void Render()
         {
 			RenderBackground(_car);

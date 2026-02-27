@@ -18,13 +18,13 @@ namespace OpenNFS1
 		int _currentView = 1;
 
 
-		public PlayerUI(DrivableVehicle vehicle)
+		public PlayerUI(DrivableVehicle vehicle, Race race)
 		{
 			_vehicle = vehicle;
 
 			_views.Add(new DebugView(_vehicle));
 			_views.Add(new ChaseView(_vehicle, 32, 14, 0));
-			_views.Add(new DashboardView(_vehicle));
+			_views.Add(new DashboardView(_vehicle, race));
 			_views.Add(new BumperView(_vehicle));
 			_views.Add(new DropCameraView(_vehicle));
 			_views[_currentView].Activate();
@@ -65,6 +65,15 @@ namespace OpenNFS1
 		public void Render()
 		{
 			_views[_currentView].Render();
+		}
+
+		/// <summary>
+		/// Forward pre-render work (e.g. mirror RT) to the active view.
+		/// Must be called before the main 3D scene renders to the backbuffer.
+		/// </summary>
+		public void PreRender()
+		{
+			_views[_currentView].PreRender();
 		}
 	}
 }

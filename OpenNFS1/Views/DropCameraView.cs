@@ -59,6 +59,8 @@ namespace OpenNFS1.Views
 			_camera.Position = _camera.Position + new Vector3(0, Engine.Instance.Random.Next(15, 50), 0);
 		}
 
+		public void PreRender() { }
+
 		public void Render()
 		{
 			RenderBackground(_car);

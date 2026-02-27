@@ -15,6 +15,10 @@ namespace OpenNFS1.UI
     {
         Race _race;
 
+        // Height of the black HUD bar at the top, in 640x480 baseline pixels.
+        // Increase this value to make the bar taller.
+        const int HudBarHeight = 30;
+
         Rectangle _backgroundRectangle;
         Texture2D _backgroundTexture;
         SpriteFont _font;
@@ -23,13 +27,9 @@ namespace OpenNFS1.UI
         {
             _race = race;
 
-			int height = Engine.Instance.Device.Viewport.Height;
-			int width = Engine.Instance.Device.Viewport.Width;
-
-            _backgroundRectangle = new Rectangle(0, 0, width, 30);
-			Color[] pixel = new Color[1] { Color.Black };
-			_backgroundTexture = new Texture2D(Engine.Instance.Device, 1, 1);
-			_backgroundTexture.SetData<Color>(pixel);
+            Color[] pixel = new Color[1] { Color.Black };
+            _backgroundTexture = new Texture2D(Engine.Instance.Device, 1, 1);
+            _backgroundTexture.SetData<Color>(pixel);
             _font = Engine.Instance.ContentManager.Load<SpriteFont>("Content\\ArialBlack-Italic");
         }
 
@@ -37,9 +37,12 @@ namespace OpenNFS1.UI
         {
             Engine.Instance.SpriteBatch.Begin();
 
-			// Pre-compute scale so all positions stay proportional to the render resolution.
-			float sx = GameConfig.ScaleX;
-			float sy = GameConfig.ScaleY;
+            // Pre-compute scale so all positions stay proportional to the render resolution.
+            float sx = GameConfig.ScaleX;
+            float sy = GameConfig.ScaleY;
+
+            // Recompute every frame so resolution changes take effect immediately.
+            _backgroundRectangle = new Rectangle(0, 0, GameConfig.ResX, (int)(HudBarHeight * sy));
 
             int secondsTillStart = _race.SecondsTillStart;
             if (secondsTillStart > 0)

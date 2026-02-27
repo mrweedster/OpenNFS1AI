@@ -7,6 +7,7 @@ using OpenNFS1.Parsers;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using GameEngine;
+using OpenNFS1;
 using OpenNFS1.Physics;
 using System.Diagnostics;
 using Microsoft.Xna.Framework.Input;
@@ -21,6 +22,7 @@ namespace OpenNFS1.Dashboards
         GearboxAnimation _gearBoxAnimation;
         public bool IsVisible { get; set; }
 		DashboardDescription _descriptor;
+        RearViewMirror _mirror;  // null when MirrorRect is empty
         
         BitmapEntry Dash, GearGate, GearKnob, Wstr, Wl06, Wl14, Wl22, Wl32, Wl45, Wr06, Wr14, Wr22, Wr32, Wr45;
 		BitmapEntry Leather1, Leather2, Leather3;
@@ -29,7 +31,7 @@ namespace OpenNFS1.Dashboards
 		static SpriteFont _digitalFont;
 		static SpriteFont _digitalFontItalic;
 
-		public Dashboard(DrivableVehicle car, DashboardDescription descriptor)
+		public Dashboard(DrivableVehicle car, DashboardDescription descriptor, Race race)
         {
             _car = car;
 			_descriptor = descriptor;
@@ -49,6 +51,11 @@ namespace OpenNFS1.Dashboards
 				_digitalFont = Engine.Instance.ContentManager.Load<SpriteFont>("Content\\ArialBlack");
 			if (_digitalFontItalic == null)
 				_digitalFontItalic = Engine.Instance.ContentManager.Load<SpriteFont>("Content\\ArialBlack-Italic");
+
+			// Create the rear-view mirror if this dashboard has a defined mirror rectangle
+			// and we have a valid Race object to render the scene from.
+			if (race != null && descriptor.MirrorRect.Width > 0 && descriptor.MirrorRect.Height > 0)
+				_mirror = new RearViewMirror(car, race, descriptor.MirrorRect);
 
 			FshFile fsh = new FshFile(Path.Combine(@"SIMDATA\DASH", descriptor.Filename));
 			var bitmaps = fsh.Header;
@@ -96,6 +103,7 @@ namespace OpenNFS1.Dashboards
 		public void Update(GameTime gameTime)
 		{
 			_gearBoxAnimation.Update(gameTime);
+			_mirror?.Update();
 			if (Engine.Instance.Input.IsKeyDown(Keys.I))
 				_descriptor.SpeedoPosition.Y += Engine.Instance.FrameTime * 20;
 			if (Engine.Instance.Input.IsKeyDown(Keys.K))
@@ -113,12 +121,25 @@ namespace OpenNFS1.Dashboards
 				+ "  Speedo=(" + (int)_descriptor.SpeedoPosition.X + "," + (int)_descriptor.SpeedoPosition.Y + ")");
 		}
 
+        /// <summary>
+        /// Renders the rear-view mirror scene to its render target.
+        /// Must be called BEFORE the SpriteBatch.Begin() in DashboardView.Render().
+        /// </summary>
+        public void RenderMirrorScene()
+        {
+            _mirror?.RenderScene();
+        }
+
         public void Render()
         {
             // Scale all sprites from the original 640x480 coordinate space.
             Vector2 spriteScale = new Vector2(GameConfig.ScaleX, GameConfig.ScaleY);
 
             Engine.Instance.SpriteBatch.Draw(Dash.Texture, Dash.GetDisplayAt(), null, Color.White, 0f, Vector2.Zero, spriteScale, SpriteEffects.None, 0f);
+
+            // Draw the mirror texture into the dashboard's black mirror rectangle,
+            // AFTER the dashboard background so it sits on top of the black area.
+            _mirror?.DrawMirror(Engine.Instance.SpriteBatch);
 
             if (_gearBoxAnimation.IsAnimating)
             {
@@ -142,21 +163,39 @@ namespace OpenNFS1.Dashboards
 				Vector2 speedoPosition = _descriptor.SpeedoPosition * spriteScale;
 				if (_descriptor.IsDigitalSpeedo)
 				{
-					// Pick font variant and apply per-car scale on top of base 0.75.
-					SpriteFont font      = _descriptor.DigitalFontItalic ? _digitalFontItalic : _digitalFont;
-					float      fontScale = 0.75f * _descriptor.DigitalFontScale * GameConfig.ScaleX;
-					Color      fontColor = _descriptor.DigitalFontColor;
-					string speedText = Math.Abs((int)_car.Speed).ToString();
-					Vector2 textSize = font.MeasureString(speedText) * fontScale;
-					// Right-align: right edge of text sits exactly at speedoPosition.X
-					Vector2 drawPos  = new Vector2(speedoPosition.X - textSize.X,
-					                               speedoPosition.Y - textSize.Y / 2);
-					// Shadow (30% opacity of the font colour, offset 1px)
-					Color shadow = new Color(fontColor.R / 6, fontColor.G / 6, fontColor.B / 6, 160);
-					Engine.Instance.SpriteBatch.DrawString(font, speedText,
-						drawPos + new Vector2(1, 1), shadow, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
-					Engine.Instance.SpriteBatch.DrawString(font, speedText,
-						drawPos, fontColor, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
+					int speed = Math.Abs((int)_car.Speed);
+
+					if (_descriptor.UseSevenSegment)
+					{
+						// ── 7-segment LED/LCD display ─────────────────────────────────────
+						// SpeedoPosition is the right-centre anchor in 640×480 space.
+						// SevenSegmentDisplay works in 640×480 coordinates and scales internally.
+						SevenSegmentDisplay.Draw(
+							Engine.Instance.SpriteBatch,
+							speed,
+							_descriptor.SpeedoPosition,          // 640×480 right-centre anchor
+							_descriptor.SevenSegmentDigitHeight,
+							_descriptor.DigitalFontColor,
+							_descriptor.SevenSegmentDimColor);
+					}
+					else
+					{
+						// ── ArialBlack font fallback ──────────────────────────────────────
+						SpriteFont font      = _descriptor.DigitalFontItalic ? _digitalFontItalic : _digitalFont;
+						float      fontScale = 0.75f * _descriptor.DigitalFontScale * GameConfig.ScaleX;
+						Color      fontColor = _descriptor.DigitalFontColor;
+						string speedText = speed.ToString();
+						Vector2 textSize = font.MeasureString(speedText) * fontScale;
+						// Right-align: right edge of text sits exactly at speedoPosition.X
+						Vector2 drawPos  = new Vector2(speedoPosition.X - textSize.X,
+						                               speedoPosition.Y - textSize.Y / 2);
+						// Shadow (30% opacity of the font colour, offset 1px)
+						Color shadow = new Color(fontColor.R / 6, fontColor.G / 6, fontColor.B / 6, 160);
+						Engine.Instance.SpriteBatch.DrawString(font, speedText,
+							drawPos + new Vector2(1, 1), shadow, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
+						Engine.Instance.SpriteBatch.DrawString(font, speedText,
+							drawPos, fontColor, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
+					}
 				}
 				else
 				{

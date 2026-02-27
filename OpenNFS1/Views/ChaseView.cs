@@ -53,6 +53,8 @@ namespace OpenNFS1.Views
 			_camera.UpVector = _car.Up;
         }
 
+        public void PreRender() { }
+
         public void Render()
         {
 			RenderBackground(_car);
